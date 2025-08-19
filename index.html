@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iVqleas Clicker v4</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#0d0d0d;color:white;text-align:center;overflow:hidden;transition:background 0.5s;}
+#overlay{position:fixed;top:0;left:0;width:100%;height:100%;backdrop-filter:blur(12px);background:rgba(0,0,0,0.7);display:flex;justify-content:center;align-items:center;cursor:pointer;font-size:2em;font-weight:bold;}
+#game{display:none;padding:30px 20px;}
+.click-box{background:#2e003e;border-radius:15px;padding:25px;margin:20px auto;max-width:350px;position:relative;}
+button{padding:12px 25px;font-size:1em;background:#b366ff;color:white;border:none;border-radius:10px;cursor:pointer;margin-top:10px;}
+button:hover{background:#d49fff;color:#2e003e;transition:0.3s;}
+.badge{background:#1a001f;padding:8px 12px;border-radius:8px;display:inline-block;margin:5px;position:relative;animation:pop 0.5s;}
+@keyframes pop{0%{transform:scale(0);}50%{transform:scale(1.2);}100%{transform:scale(1);}}
+.sticker{position:absolute;width:40px;height:40px;cursor:grab;}
+input[type="text"]{padding:5px;border-radius:5px;border:none;margin:3px 0;}
+.profile-box img{max-width:100px;display:block;margin:10px auto;border-radius:50%;}
+</style>
+</head>
+<body>
+<div id="overlay">CLICK HERE TO BEGIN!</div>
+<div id="game">
+<h1>iVqleas Clicker v4</h1>
+<div class="click-box" id="clickPanel"><p>Points: <span id="points">0</span></p><button id="clickBtn">Click Me!</button></div>
+<div class="click-box"><h3>Badges:</h3><div id="badges"></div></div>
+<div class="click-box profile-box"><img id="profileAvatarImg" src="" alt="Avatar"><div>Name: <span id="profileName"></span></div><div>Bio: <span id="profileBio"></span></div><div>Title: <span id="profileTitle"></span></div><button onclick="editProfile()">Edit Profile</button></div>
+<script>
+// Overlay start
+let overlay=document.getElementById("overlay"),game=document.getElementById("game");
+overlay.onclick=()=>{overlay.style.display="none";game.style.display="block";}
+
+// Points
+let pts=parseInt(localStorage.getItem("points"))||0;
+let ptsDisp=document.getElementById("points");
+ptsDisp.innerText=pts;
+
+let clickBtn=document.getElementById("clickBtn");
+clickBtn.onclick=()=>{
+ pts++; ptsDisp.innerText=pts; localStorage.setItem("points",pts);
+ checkBadges(); spawnSpark(); checkTitle();
+}
+
+// Spark animation
+function spawnSpark(){
+ let s=document.createElement("div"); s.className="sticker"; s.style.left=Math.random()*280+"px"; s.style.top="30px"; s.style.background="yellow"; document.getElementById("clickPanel").appendChild(s);
+ setTimeout(()=>s.remove(),700);
+}
+
+// Badges
+let badgesDiv=document.getElementById("badges");
+let earned=JSON.parse(localStorage.getItem("badges"))||[];
+function checkBadges(){
+ if(pts>=10&&!earned.includes("Beginner")) earned.push("Beginner");
+ if(pts>=50&&!earned.includes("Clicker")) earned.push("Clicker");
+ if(pts>=100&&!earned.includes("Pro")) earned.push("Pro");
+ if(pts>=500&&!earned.includes("Legend")) earned.push("Legend");
+ updateBadges();
+}
+function updateBadges(){badgesDiv.innerHTML="";earned.forEach(b=>{let sp=document.createElement("span");sp.className="badge";sp.innerText=b;badgesDiv.appendChild(sp);}); localStorage.setItem("badges",JSON.stringify(earned));}
+checkBadges();
+</script>
+<script>
+// Profile
+function loadProfile(){
+ document.getElementById("profileName").innerText=localStorage.getItem("profileName")||"Your Name";
+ document.getElementById("profileBio").innerText=localStorage.getItem("profileBio")||"Your Bio";
+ document.getElementById("profileAvatarImg").src=localStorage.getItem("profileAvatar")||"https://via.placeholder.com/100";
+ document.getElementById("profileTitle").innerText=localStorage.getItem("profileTitle")||"No Title";
+}
+function editProfile(){
+ let n=prompt("Name:",document.getElementById("profileName").innerText);
+ let b=prompt("Bio:",document.getElementById("profileBio").innerText);
+ let a=prompt("Avatar URL:",document.getElementById("profileAvatarImg").src);
+ document.getElementById("profileName").innerText=n; localStorage.setItem("profileName",n);
+ document.getElementById("profileBio").innerText=b; localStorage.setItem("profileBio",b);
+ document.getElementById("profileAvatarImg").src=a; localStorage.setItem("profileAvatar",a);
+ checkTitle();
+}
+function checkTitle(){
+ let t;
+ if(pts>=500)t="Legend";else if(pts>=100)t="Pro";else if(pts>=50)t="Clicker";else if(pts>=10)t="Beginner";else t="No Title";
+ document.getElementById("profileTitle").innerText=t; localStorage.setItem("profileTitle",t);
+}
+loadProfile();
+checkTitle();
+</script>
+<script>
+// Drag & drop decorations
+let stickers=[];
+function addSticker(url){
+ let st=document.createElement("div"); st.className="sticker"; st.style.background="url("+url+") center/cover"; st.style.left="100px"; st.style.top="100px"; st.draggable=true;
+ st.ondragstart=e=>{e.dataTransfer.setData("text/plain",""); st.dataset.offsetX=e.offsetX; st.dataset.offsetY=e.offsetY;};
+ st.ondrag=e=>{}; st.ondragend=e=>{st.style.left=(e.pageX-st.dataset.offsetX)+"px"; st.style.top=(e.pageY-st.dataset.offsetY)+"px";};
+ document.body.appendChild(st); stickers.push(st); 
+}
+
+// Background
+function setBG(url){document.body.style.background="url("+url+") center/cover no-repeat"; localStorage.setItem("bg",url);}
+if(localStorage.getItem("bg")) setBG(localStorage.getItem("bg"));
+
+// Achievements panel
+function updateAchievements(){
+ let ach=document.getElementById("badges"); // reuse badgesDiv
+ ach.innerHTML="";
+ earned.forEach(b=>{let s=document.createElement("span"); s.className="badge"; s.innerText=b+" Ach"; ach.appendChild(s);});
+}
+updateAchievements();
+</script>
+</body>
+</html>
